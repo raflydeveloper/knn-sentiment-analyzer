@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="text-center">{{ title }}</h2>
+    <p class="text-center text-muted">Gunakan halaman ini untuk menjalankan klasifikasi KNN, menemukan parameter K terbaik, dan menganalisis hasilnya.</p>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>1. Validasi & Klasifikasi Batch (Data Uji: 20%)</span>
+            {% if detailed_results or experiment_results %}
+            <a href="{{ url_for('clear_classification_results') }}" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash-alt me-1"></i> Hapus Hasil
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <p><strong>Alur Kerja yang Disarankan:</strong><br>
+                - Tekan <strong>'Cari K Terbaik'</strong> untuk menjalankan 5-Fold Cross-Validation.<br>
+                - Nilai K terbaik akan otomatis terisi di form.<br>
+                - Tekan <strong>'Jalankan Klasifikasi Tunggal'</strong> untuk melihat hasil detail performa.
+            </p>
+            <hr>
+            <form method="POST" action="{{ url_for('klasifikasi') }}" class="needs-loader" name="classification_form">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.k_value.label(class="form-label") }}
+                    {{ form.k_value(class="form-control" + (" is-invalid" if form.k_value.errors else "")) }}
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    {{ form.submit_experiment(class="btn btn-success me-md-2") }}
+                    {{ form.submit_classify(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            2. Uji Coba Model dengan Teks Baru
+        </div>
+        <div class="card-body">
+            <p>Masukkan sebuah kalimat baru untuk melihat prediksinya. Model akan menggunakan nilai K dari form di atas.</p>
+            <form method="POST" action="{{ url_for('klasifikasi') }}" class="needs-loader" name="predict_form">
+                {{ predict_form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ predict_form.text_to_predict.label(class="form-label") }}
+                    {{ predict_form.text_to_predict(class="form-control" + (" is-invalid" if predict_form.text_to_predict.errors else "")) }}
+                </div>
+                <div class="d-grid">
+                    {{ predict_form.submit_predict(class="btn btn-info w-100") }}
+                </div>
+            </form>
+            {% if single_prediction_result %}
+            <div class="alert alert-dark mt-3">
+                <h5 class="alert-heading">Hasil Prediksi: <span class="badge text-bg-light">{{ single_prediction_result.prediction|capitalize }}</span></h5>
+                <hr>
+                <p><strong>Teks Asli:</strong><br> {{ single_prediction_result.text }}</p>
+                <p class="mb-0"><strong>Teks Setelah Preprocessing:</strong><br> <small class="font-monospace">{{ single_prediction_result.processed_text }}</small></p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if experiment_results %}
+        <hr>
+        <h3 class="text-center">Hasil Eksperimen 5-Fold Cross-Validation untuk KNN</h3>
+        {% set best_result = experiment_results|max(attribute='avg_accuracy') %}
+        <div class="card">
+            <div class="card-header">Tabel Ringkasan Performa per Nilai K</div>
+            <div class="card-body">
+                <div class="alert alert-success" role="alert">
+                    <strong>Hasil Terbaik:</strong> Ditemukan pada <strong>K = {{ best_result.k }}</strong> dengan rata-rata akurasi <strong>{{ "%.2f"|format(best_result.avg_accuracy * 100) }}%</strong>.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-sm">
+                        <thead class="table-light"><tr><th>Nilai K</th><th>Rata-rata Akurasi (dari 5-Fold)</th><th>Stabilitas (Standar Deviasi)</th></tr></thead>
+                        <tbody>
+                            {% for item in experiment_results %}
+                            <tr class="{{ 'table-success fw-bold' if item.k == best_result.k else '' }}">
+                                <td>{{ item.k }}</td>
+                                <td>{{ "%.2f"|format(item.avg_accuracy * 100) }}%</td>
+                                <td>&plusmn; {{ "%.2f"|format(item.std_dev * 100) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if detailed_results %}
+        <hr>
+        <h3 class="text-center">Hasil Detail Klasifikasi ({{ detailed_results.model_name }}, Test Size={{ detailed_results.test_size }}%)</h3>
+        <div class="row justify-content-center g-3 mb-4">
+            <div class="col-md-3"><div class="card text-center text-bg-primary"><div class="card-body"><h5 class="card-title">{{ detailed_results.prediction_counts.total }}</h5><p class="card-text">Total Data Uji</p></div></div></div>
+            <div class="col-md-3"><div class="card text-center text-bg-success"><div class="card-body"><h5 class="card-title">{{ detailed_results.prediction_counts.positif }}</h5><p class="card-text">Total Prediksi Positif</p></div></div></div>
+            <div class="col-md-3"><div class="card text-center text-bg-danger"><div class="card-body"><h5 class="card-title">{{ detailed_results.prediction_counts.negatif }}</h5><p class="card-text">Total Prediksi Negatif</p></div></div></div>
+            <div class="col-md-3"><div class="card text-center text-bg-secondary"><div class="card-body"><h5 class="card-title">{{ detailed_results.prediction_counts.netral }}</h5><p class="card-text">Total Prediksi Netral</p></div></div></div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-header">Tabel Perbandingan Hasil Prediksi</div>
+            <div class="card-body"><div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-striped table-hover table-sm">
+                    <thead><tr><th>No</th><th>Teks (Hasil Stemming)</th><th>Label Aktual (Pakar)</th><th>Label Prediksi (KNN)</th></tr></thead>
+                    <tbody>
+                        {% for item in detailed_results.predictions %}
+                        <tr class="{{ 'table-success' if item.actual == item.predicted else 'table-danger' }}">
+                            <td>{{ loop.index }}</td><td>{{ item.text }}</td>
+                            <td><span class="badge text-bg-primary">{{ item.actual|capitalize }}</span></td>
+                            <td><span class="badge text-bg-info">{{ item.predicted|capitalize }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div></div>
+        </div>
+        <div class="card mb-4">
+            <div class="card-header">Confusion Matrix</div>
+            <div class="card-body"><div class="table-responsive"><table class="table table-bordered text-center">
+                <thead class="table-light"><tr><th rowspan="2" class="align-middle">Label Aktual</th><th colspan="{{ detailed_results.metrics.labels|length }}">Label Prediksi</th></tr><tr>{% for label in detailed_results.metrics.labels %}<th>{{ label|capitalize }}</th>{% endfor %}</tr></thead>
+                <tbody>{% for actual_label in detailed_results.metrics.labels %}<tr><th scope="row" class="align-middle">{{ actual_label|capitalize }}</th>{% for pred_label in detailed_results.metrics.labels %}<td class="{{ 'table-success fw-bold' if actual_label == pred_label else '' }}">{{ detailed_results.metrics.confusion_matrix[actual_label][pred_label] }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+            </table></div></div>
+        </div>
+        <div class="card">
+            <div class="card-header">Laporan Evaluasi Kinerja</div>
+            <div class="card-body">
+                <div class="alert alert-info"><strong>Akurasi Keseluruhan: {{ "%.2f"|format(detailed_results.metrics.accuracy * 100) }}%</strong></div>
+                <div class="table-responsive"><table class="table table-striped table-hover table-sm">
+                    <thead><tr><th>Kelas</th><th>Presisi</th><th>Recall</th><th>F1-Score</th><th>Support</th></tr></thead>
+                    <tbody>{% for label, metrics in detailed_results.metrics.report.items() %}<tr><th>{{ label|capitalize }}</th><td>{{ "%.2f"|format(metrics.precision) }}</td><td>{{ "%.2f"|format(metrics.recall) }}</td><td>{{ "%.2f"|format(metrics.f1_score) }}</td><td>{{ metrics.support }}</td></tr>{% endfor %}</tbody>
+                </table></div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if not experiment_results and not detailed_results and not single_prediction_result %}
+        <div class="alert alert-info text-center" role="alert">
+            Silakan jalankan sebuah aksi untuk melihat hasilnya.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

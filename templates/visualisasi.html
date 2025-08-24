@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mt-2 mb-4 text-center">{{ title }}</h2>
+    
+    {% if error %}
+        <div class="alert alert-warning text-center" role="alert">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}{{ messages[0] }}{% else %}Terjadi kesalahan atau data tidak cukup untuk visualisasi.{% endif %}
+            {% endwith %}
+            <br>
+            <a href="{{ url_for('klasifikasi') }}" class="alert-link">Kembali ke halaman Klasifikasi</a>
+        </div>
+    {% else %}
+        <div class="text-center mb-4">
+            <p class="text-muted">Menampilkan hasil prediksi dari konfigurasi model terbaik.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center">
+                        <h5>Distribusi Hasil Prediksi (Bar Chart)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{{ url_for('static', filename=bar_chart_path) }}?v={{ range(1, 10000)|random }}" 
+                             class="img-fluid" alt="Bar Chart Hasil Prediksi">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center">
+                        <h5>Persentase Hasil Prediksi (Pie Chart)</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{{ url_for('static', filename=pie_chart_path) }}?v={{ range(1, 10000)|random }}" 
+                             class="img-fluid" style="max-height: 350px;" alt="Pie Chart Hasil Prediksi">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="my-4">
+        <h3 class="text-center mb-4">Visualisasi Kata Kunci (Word Cloud)</h3>
+
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center">
+                        <h5 class="text-success">Sentimen Positif</h5>
+                    </div>
+                    <div class="card-body p-1">
+                        <img src="{{ url_for('static', filename=wordcloud_paths.get('positif', '')) }}?v={{ range(1, 10000)|random }}" 
+                             class="img-fluid" alt="Word Cloud Positif">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center">
+                        <h5 class="text-danger">Sentimen Negatif</h5>
+                    </div>
+                    <div class="card-body p-1">
+                        <img src="{{ url_for('static', filename=wordcloud_paths.get('negatif', '')) }}?v_={{ range(1, 10000)|random }}" 
+                             class="img-fluid" alt="Word Cloud Negatif">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header text-center">
+                        <h5 class="text-secondary">Sentimen Netral</h5>
+                    </div>
+                    <div class="card-body p-1">
+                        <img src="{{ url_for('static', filename=wordcloud_paths.get('netral', '')) }}?v={{ range(1, 10000)|random }}" 
+                             class="img-fluid" alt="Word Cloud Netral">
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %} 
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Aplikasi Web Analisis Sentimen</h1>
+        <p class="col-md-8 fs-4">
+            Studi Kasus: Analisis Opini Publik terhadap "Uji Coba Vaksin TBC Yang Disponsori Gates Foundation"
+        </p>
+        <p>Aplikasi ini dirancang untuk melakukan seluruh alur kerja analisis sentimen, mulai dari pengumpulan data, preprocessing, pelabelan, hingga klasifikasi menggunakan metode K-Nearest Neighbors (KNN) dan visualisasi hasil.</p>
+    </div>
+</div>
+
+<h2 class="text-center mb-4">Status Data Saat Ini</h2>
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card text-center h-100 shadow-sm">
+            <div class="card-body">
+                <h1 class="display-4"><i class="fas fa-database text-primary"></i></h1>
+                <h5 class="card-title">Dataset Mentah</h5>
+                <p class="display-6 fw-bold">{{ stats.total_dataset }}</p>
+                <p class="card-text">Total komentar yang berhasil diimpor.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100 shadow-sm">
+            <div class="card-body">
+                <h1 class="display-4"><i class="fas fa-magic text-info"></i></h1>
+                <h5 class="card-title">Data Setelah Preprocessing</h5>
+                <p class="display-6 fw-bold">{{ stats.total_preprocessing }}</p>
+                <p class="card-text">Total komentar yang valid setelah dibersihkan.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100 shadow-sm">
+            <div class="card-body">
+                <h1 class="display-4"><i class="fas fa-tags text-warning"></i></h1>
+                <h5 class="card-title">Data Telah Dilabeli</h5>
+                <p class="display-6 fw-bold">{{ stats.total_berlabel }}</p>
+                <p class="card-text">Total komentar yang telah diberi label sentimen.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-md-4">
+        <div class="alert alert-success text-center">
+            <h5 class="alert-heading"><i class="fas fa-smile"></i> Positif</h5>
+            <p class="display-6 mb-0">{{ stats.label_positif }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="alert alert-danger text-center">
+            <h5 class="alert-heading"><i class="fas fa-frown"></i> Negatif</h5>
+            <p class="display-6 mb-0">{{ stats.label_negatif }}</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="alert alert-secondary text-center">
+            <h5 class="alert-heading"><i class="fas fa-meh"></i> Netral</h5>
+            <p class="display-6 mb-0">{{ stats.label_netral }}</p>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<h2 class="text-center mb-4">Navigasi Cepat</h2>
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-upload me-2"></i>Input Data & Preprocessing</h5>
+                <p class="card-text">Mulai dengan mengunggah dataset mentah Anda, kemudian jalankan proses pembersihan teks otomatis.</p>
+                <div class="mt-auto">
+                    <a href="{{ url_for('input_data') }}" class="btn btn-primary">Ke Halaman Input</a>
+                    <a href="{{ url_for('preprocessing') }}" class="btn btn-secondary">Ke Halaman Preprocessing</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title"><i class="fas fa-cogs me-2"></i>Klasifikasi & Visualisasi</h5>
+                <p class="card-text">Lakukan klasifikasi sentimen menggunakan model KNN dan visualisasikan hasilnya dalam bentuk grafik.</p>
+                <div class="mt-auto">
+                    <a href="{{ url_for('klasifikasi') }}" class="btn btn-info">Ke Halaman Klasifikasi</a>
+                    <a href="{{ url_for('visualisasi') }}" class="btn btn-dark">Ke Halaman Visualisasi</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
